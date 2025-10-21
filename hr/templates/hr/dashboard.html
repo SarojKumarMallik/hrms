@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - HR System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+    <h1 class="h2">HR Management System</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <span class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-calendar"></i> {{ today_date }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <!-- Total Admins -->
+    <div class="col-md-4">
+        <div class="custom-card">
+            <div class="card-header">
+                <div class="card-title">Total Admins</div>
+                <div class="card-icon" style="background-color: #e74c3c;">
+                    <i class="fas fa-user-check"></i>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="metric-large">{{ total_admins }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i> Active administrators
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Employees -->
+    <div class="col-md-4">
+        <div class="custom-card">
+            <div class="card-header">
+                <div class="card-title">Total Employees</div>
+                <div class="card-icon" style="background-color: #3498db;">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="metric-large">{{ total_employees }}</div>
+                <div class="metric-change positive d-flex justify-content-between align-items-center">
+                    <!--  -->
+
+                    <span>
+                        <a href="{% url 'all_employee' %}" class="eye-link" style="color: #2ecc71; font-size: 13px;">
+                            <i class="fas fa-users" style="font-size: 15px; margin-right: 4px;"></i>
+                            All employees
+                        </a>
+                    </span>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Active Employees -->
+    <div class="col-md-4">
+        <div class="custom-card">
+            <div class="card-header">
+                <div class="card-title">Active Employees</div>
+                <div class="card-icon" style="background-color: #2ecc71;">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="metric-large">{{ active_employees }}</div>
+                <div class="metric-change positive d-flex justify-content-between align-items-center">
+
+
+                    <!-- <span>
+                    <a style="color: #2ecc71;" href="{% url 'active_employee' %}" class="eye-link">
+                    <i style="font-size: -2px;" class="fas fa-chart-line"></i> Currently active
+                    </a>
+                </span> -->
+                    <span>
+                        <a href="{% url 'active_employee' %}" class="eye-link" style="color: #2ecc71; font-size: 13px;">
+                            <i class="fas fa-chart-line" style="font-size: 15px; margin-right: 4px;"></i>
+                            Currently active
+                        </a>
+                    </span>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div style="margin-top: 20px;" class="row">
+    <!-- Employee Location Chart -->
+    <div class="col-md-6">
+        <div class="chart-card">
+            <h5 class="chart-title text-primary">Employee Locations</h5>
+            <div class="chart-container">
+                <canvas id="locationChart"></canvas>
+                <div class="chart-center">
+                    <h2>{{ total_employees }}</h2>
+                    <p>Total Employees</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Teams Chart -->
+    <div class="col-md-6">
+        <div class="chart-card">
+            <h5 class="chart-title text-success">Department Teams</h5>
+            <div class="chart-container">
+                <canvas id="departmentChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // === Employee Location Doughnut ===
+        const ctx1 = document.getElementById('locationChart');
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: {{ location_labels| safe }},
+        datasets: [{
+            data: {{ location_counts| safe }},
+        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#9b59b6'],
+        borderWidth: 3,
+        borderColor: '#fff',
+        hoverOffset: 10,
+            }]
+        },
+        options: {
+        responsive: true,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 14,
+                    padding: 20,
+                    color: '#555',
+                    font: { size: 13, family: 'Poppins, sans-serif' }
+                }
+            }
+        }
+    }
+    });
+
+    // === Department Bar Chart ===
+    const ctx2 = document.getElementById('departmentChart');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: {{ department_labels| safe }},
+        datasets: [{
+            label: 'Employees per Department',
+            data: {{ department_counts| safe }},
+        backgroundColor: [
+            '#4e73df', '#1cc88a', '#36b9cc',
+            '#f6c23e', '#e74a3b', '#9b59b6',
+            '#2ecc71', '#f39c12', '#16a085', '#d35400'
+        ],
+        borderRadius: 10,
+        borderSkipped: false,
+        barThickness: 45
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#333',
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 13 },
+                callbacks: {
+                    title: (tooltipItems) => tooltipItems[0].label,
+                    label: (tooltipItem) => `Employees: ${tooltipItem.formattedValue}`
+                },
+                padding: 10,
+                cornerRadius: 8
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#444',
+                    font: { size: 13, family: 'Poppins, sans-serif' },
+                    maxRotation: 25,
+                    minRotation: 25,
+                    callback: function (value) {
+                        const label = this.getLabelForValue(value);
+                        return label.length > 12 ? label.substring(0, 10) + '…' : label;
+                    }
+                },
+                grid: { display: false }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: '#666',
+                    font: { size: 12, family: 'Poppins, sans-serif' },
+                    stepSize: 1
+                },
+                grid: { color: 'rgba(0,0,0,0.05)' }
+            }
+        },
+        animation: {
+            duration: 1000,
+            easing: 'easeOutQuart'
+        }
+    }
+    });
+});
+</script>
+
+<!-- 🌈 CSS Styling -->
+<style>
+    .chart-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        margin-bottom: 30px;
+    }
+
+    .chart-card:hover {
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-3px);
+    }
+
+    .chart-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 320px;
+    }
+
+    .chart-center {
+        position: absolute;
+        top: 42%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+    }
+
+    .chart-center h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: #333;
+    }
+
+    .chart-center p {
+        font-size: 0.9rem;
+        color: #888;
+        margin: 0;
+    }
+
+    canvas {
+        display: inline-block !important;
+        vertical-align: middle;
+    }
+
+    .eye-link {
+        color: #3498db;
+        font-size: 18px;
+        transition: color 0.3s ease;
+        text-decoration: none;
+    }
+
+    .eye-link {
+        color: gray;
+        font-size: 18px;
+        transition: color 0.3s ease;
+        text-decoration: none;
+    }
+
+    .eye-link:hover {
+        color: red;
+    }
+
+    .metric-change {
+        font-size: 14px;
+    }
+</style>
+{% endblock %}

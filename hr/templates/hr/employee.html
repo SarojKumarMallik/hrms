@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Employee Management - HR System{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+    <div>
+        <h1 class="h2">Employee Management</h1>
+        <div class="text-muted">Today: {{ today_date }}</div>
+    </div>
+</div>
+
+<!-- DataTable-like Controls -->
+<div class="datatable-controls">
+    <div class="controls-row">
+        <div class="d-flex gap-3 align-items-center flex-wrap">
+            <form method="get" class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" name="search" class="form-control"
+                placeholder="Search employees..." value="{{ search_query }}">
+            </form>
+
+            <!-- <select id="departmentFilter" class="form-control filter-select">
+                <option value="">All Departments</option>
+                <option value="development" {% if department_filter == 'development' %}selected{% endif %}>Development</option>
+                <option value="design" {% if department_filter == 'design' %}selected{% endif %}>Design</option>
+                <option value="marketing" {% if department_filter == 'marketing' %}selected{% endif %}>Marketing</option>
+                <option value="hr" {% if department_filter == 'hr' %}selected{% endif %}>HR</option>
+                <option value="finance" {% if department_filter == 'finance' %}selected{% endif %}>Finance</option>
+            </select>
+            <select id="statusFilter" class="form-control filter-select">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select> -->
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            {% if request.session.user_role in 'ADMIN,HR,SUPER_ADMIN' %}
+            <a href="{% url 'add_employee' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Employee
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Entries Info -->
+<div class="entries-info">
+    Showing {{ employees.start_index }} to {{ employees.end_index }} of {{ employees.paginator.count }} entries
+    {% if search_query or department_filter or status_filter %}
+    <span class="text-muted">(filtered)</span>
+    {% endif %}
+</div>
+
+<!-- Employee Cards Grid -->
+<div class="employee-grid d-flex flex-wrap gap-3" id="employeeGrid">
+    {% for emp in employees %}
+    <div class="employee-card position-relative">
+        <div class="status {% if emp.status == 'inactive' %}inactive{% else %}active{% endif %}">
+            {{ emp.status }}
+        </div>
+        <!-- Eye icon for viewing employee details -->
+        {% if request.session.user_role in 'ADMIN,HR,SUPER_ADMIN' %}
+        <a href="{% url 'employee_detail' emp.id %}" class="view-icon" title="View Details">
+            <i class="fas fa-eye"></i>
+        </a>
+        {% endif %}
+        <img src="{{ emp.profile_picture.url|default:'/static/default.png' }}" alt="Profile" class="employee-image">
+        <div class="employee-info">
+            <h3>{{ emp.first_name }} {{ emp.last_name }}</h3>
+            <p style="color: #3161FF;" class="designation">{{ emp.designation }}</p>
+        </div>
+        
+        <!-- Employee Details Section -->
+        <div class="employee-details-section">
+            <div class="details-row">
+                <span class="detail-label">Emp. ID</span>
+                <span class="detail-value">{{ emp.employee_id }}</span>
+            </div>
+            <div class="details-row">
+                <span class="detail-label">Department</span>
+                <span class="detail-value">{{ emp.department }}</span>
+            </div>
+            <div class="details-row">
+                <span class="detail-label">Hired Date</span>
+                <span class="detail-value">{{ emp.date_of_joining|date:"M. d, Y" }}</span>
+            </div>
+            <div class="contact-info">
+                <i class="fas fa-envelope"></i>
+                <span>{{ emp.email }}</span>
+            </div>
+            <div class="contact-info">
+                <i class="fas fa-phone"></i>
+                <span>{{ emp.phone }}</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="no-results">
+        <i class="fas fa-users-slash"></i>
+        <h4>No employees found</h4>
+        <p>Try adjusting your search or filter criteria</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Advanced Pagination -->
+{% if employees.has_other_pages %}
+<div class="pagination-container">
+    <div class="pagination-info">
+        Showing {{ employees.start_index }} to {{ employees.end_index }} of {{ employees.paginator.count }} entries
+    </div>
+    
+    <div class="d-flex align-items-center gap-4">
+        <div class="page-size-selector">
+            <span>Show</span>
+            <select id="pageSizeSelect" class="form-select">
+                <option value="12" {% if page_size == 12 %}selected{% endif %}>12</option>
+                <option value="24" {% if page_size == 24 %}selected{% endif %}>24</option>
+                <option value="48" {% if page_size == 48 %}selected{% endif %}>48</option>
+                <option value="96" {% if page_size == 96 %}selected{% endif %}>96</option>
+            </select>
+            <span>entries</span>
+        </div>
+
+        <nav aria-label="Employee pagination">
+            <ul class="pagination mb-0">
+                {% if employees.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" aria-label="First">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ employees.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" aria-label="Previous">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                </li>
+                {% endif %}
+
+                {% for i in employees.paginator.page_range %}
+                    {% if employees.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                    {% elif i > employees.number|add:'-3' and i < employees.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if employees.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ employees.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" aria-label="Next">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ employees.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" aria-label="Last">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add Employee Modal -->
+{% if request.session.user_role in 'ADMIN,HR,SUPER_ADMIN' %}
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" enctype="multipart/form-data" action="{% url 'employee_page' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addEmployeeLabel">Add Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Employee ID</label>
+                            <input type="text" name="employee_id" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">First Name</label>
+                            <input type="text" name="first_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" name="last_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Designation</label>
+                            <input type="text" name="designation" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Reporting Manager</label>
+                            <input type="text" name="ReportingManager" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role</label>
+                            <select name="role" class="form-control" required>
+                                <option value="Employee">Employee</option>
+                                <option value="Manager">Manager</option>
+                                <option value="HR">HR</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Super Admin">Super Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location</label>
+                            <select name="location" class="form-control" required>
+                                <option value="BBSR">Bhubaneswar</option>
+                                <option value="bglr">Bangalore</option>
+                                <option value="mumbai">Mumbai</option>
+                                <option value="jaypur">Jaypur</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Date of Joining</label>
+                            <input type="date" name="date_of_joining" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-control" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Profile Picture</label>
+                            <input type="file" name="image" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to redirect to employee detail page
+    function viewEmployeeDetails(employeeId) {
+        console.log('Redirecting to employee detail:', employeeId);
+        // Construct the URL properly
+        const baseUrl = "{% url 'employee_detail' 0 %}";
+        const url = baseUrl.replace('0', employeeId);
+        console.log('Redirect URL:', url);
+        window.location.href = url;
+    }
+
+    // DataTable-like functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const departmentFilter = document.getElementById('departmentFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+        let searchTimeout;
+
+        // Debug: Check if elements are found
+        console.log('Search input:', searchInput);
+        console.log('Department filter:', departmentFilter);
+        console.log('Status filter:', statusFilter);
+
+        // Debounced search function
+        function performSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                updateURL();
+            }, 500);
+        }
+
+        // Update URL with current filters
+        function updateURL() {
+            const urlParams = new URLSearchParams();
+            
+            if (searchInput && searchInput.value) {
+                urlParams.set('search', searchInput.value);
+            }
+            
+            if (departmentFilter && departmentFilter.value) {
+                urlParams.set('department', departmentFilter.value);
+            }
+            
+            if (statusFilter && statusFilter.value) {
+                urlParams.set('status', statusFilter.value);
+            }
+            
+            if (pageSizeSelect && pageSizeSelect.value !== '12') {
+                urlParams.set('page_size', pageSizeSelect.value);
+            }
+            
+            // Reset to page 1 when filters change
+            urlParams.set('page', '1');
+            
+            window.location.href = '?' + urlParams.toString();
+        }
+
+        // Event listeners
+        if (searchInput) {
+            searchInput.addEventListener('input', performSearch);
+        }
+        if (departmentFilter) {
+            departmentFilter.addEventListener('change', updateURL);
+        }
+        if (statusFilter) {
+            statusFilter.addEventListener('change', updateURL);
+        }
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', updateURL);
+        }
+
+        // Add click event listeners to all view icons
+    //     document.querySelectorAll('.view-icon').forEach(icon => {
+    //         icon.addEventListener('click', function(e) {
+    //             e.preventDefault();
+    //             const employeeId = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+    //             console.log('View icon clicked for employee:', employeeId);
+    //             viewEmployeeDetails(employeeId);
+    //         });
+    //     });
+    // });
+    document.querySelectorAll('.view-icon').forEach(icon => {
+    icon.addEventListener('click', function(e) {
+        e.preventDefault();
+        const employeeId = this.dataset.id;
+        console.log('View icon clicked for employee:', employeeId);
+        viewEmployeeDetails(employeeId);
+    });
+});
+</script>
+{% endblock %}

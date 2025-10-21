@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HR Management System{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css"> 
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            min-height: 100vh;
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+        
+        .sidebar .logo {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar .logo h4 {
+            color: white;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-section {
+            padding: 15px 20px 5px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 2px 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        
+        /* Top Navbar Styles */
+        .top-navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,.08);
+            padding: 12px 20px;
+            margin-left: 250px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            color: #2c3e50 !important;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .notification-badge {
+            position: relative;
+        }
+        
+        .notification-badge .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 0.65rem;
+        }
+        
+        /* Main content area */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        
+        /* Card styles */
+        .custom-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .custom-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .metric-large {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .metric-change {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .positive {
+            color: #2ecc71;
+        }
+
+        .negative {
+            color: #e74c3c;
+        }
+        
+        .page-header {
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* Employee Page Specific Styles */
+        .datatable-controls {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            height: 42px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+        }
+
+        .filter-select {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            height: 42px;
+            min-width: 150px;
+        }
+
+        .entries-info {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .employee-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .employee-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            width: 340px;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+            overflow: hidden;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .employee-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 40px auto 10px;
+            display: block;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .employee-info {
+            text-align: center;
+            padding: 10px 20px;
+        }
+
+        .employee-info h3 {
+            font-size: 18px;
+            margin: 5px 0 2px;
+        }
+
+        .designation {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .status {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            text-transform: capitalize;
+        }
+
+        .status.active {
+            background-color: #d4f7dc;
+            color: #0a8a3a;
+        }
+
+        .status.inactive {
+            background-color: #ffe6e1;
+            color: #ff6b6b;
+        }
+
+        .view-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .view-icon:hover {
+            background-color: #3498db;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .employee-details-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .details-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .contact-info i {
+            color: #3498db;
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination-info {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            gap: 5px;
+        }
+
+        .page-item {
+            margin: 0;
+        }
+
+        .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            color: #3498db;
+            text-decoration: none;
+            transition: all 0.3s;
+            min-width: 40px;
+            height: 40px;
+        }
+
+        .page-link:hover {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .page-item.active .page-link {
+            background-color: #3498db;
+            border-color: #3498db;
+            color: white;
+        }
+
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-size-selector select {
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            padding: 6px 10px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+            width: 100%;
+        }
+
+        .no-results i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #2c3e50;
+            background-color: #f8f9fa;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        /* Button Group Styles */
+        .btn-group .btn {
+            border-radius: 6px;
+            margin: 0 2px;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Sidebar Toggle */
+        .sidebar-toggle {
+            display: none;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            
+            .sidebar.show {
+                margin-left: 0;
+            }
+            
+            .main-content,
+            .top-navbar {
+                margin-left: 0;
+            }
+            
+            .sidebar-toggle {
+                display: block;
+            }
+            
+            .search-box {
+                min-width: 200px;
+            }
+            
+            .employee-card {
+                width: 100%;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if request.session.user_authenticated %}
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="logo">
+            <h4><i class="fas fa-users-cog"></i> HR System</h4>
+        </div>
+        
+        {% if request.session.user_role == 'ADMIN' or request.session.user_role == 'SUPER_ADMIN' %}
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+        </ul>
+        
+        <!-- <div class="nav-section">HR Management</div> -->
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'employee_page' %}active{% endif %}" href="{% url 'employee_page' %}">
+                    <i class="fas fa-users"></i> Employees
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'admin_list' %}active{% endif %}" href="{% url 'admin_list' %}">
+                    <i class="fas fa-user-tie"></i> Admins
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link dropdown-toggle" 
+                href="#" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#attendanceMenu" 
+                aria-expanded="false" 
+                aria-controls="attendanceMenu">
+                    <i class="fas fa-user-check"></i> Attendance
+                </a>
+
+                <ul class="collapse list-unstyled ps-3" id="attendanceMenu">
+                    <li>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                        href="{% url 'attendance:dashboard' %}">
+                            <i class="fas fa-chart-line"></i> Biometric
+                        </a>
+                    </li>
+                    <li>
+                        <a class="nav-link {% if 'attendance' in request.path %}active{% endif %}" href="{% url 'attendance:report' %}">
+                                <i class="fas fa-user-check"></i> All Attendance
+                            </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard' %}active{% endif %}" href="{% url 'leave_dashboard' %}">
+                    <i class="fas fa-calendar-alt"></i> Leave Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-money-bill-wave"></i> Payroll
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-user-plus"></i> Recruitment
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-tasks"></i> Task Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+            </li>
+        </ul>
+         {% elif request.session.user_role == 'HR' %}
+
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+        </ul>
+        
+        <!-- <div class="nav-section">HR Management</div> -->
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'employee_page' %}active{% endif %}" href="{% url 'employee_page' %}">
+                    <i class="fas fa-users"></i> Employees
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'admin_list' %}active{% endif %}" href="{% url 'admin_list' %}">
+                    <i class="fas fa-user-tie"></i> Admins
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link dropdown-toggle" 
+                href="#" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#attendanceMenu" 
+                aria-expanded="false" 
+                aria-controls="attendanceMenu">
+                    <i class="fas fa-user-check"></i> Attendance
+                </a>
+
+                <ul class="collapse list-unstyled ps-3" id="attendanceMenu">
+                    <li>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                        href="{% url 'attendance:dashboard' %}">
+                            <i class="fas fa-chart-line"></i> Biometric
+                        </a>
+                    </li>
+                    <li>
+                        <a class="nav-link {% if 'attendance' in request.path %}active{% endif %}" href="{% url 'attendance:report' %}">
+                                <i class="fas fa-user-check"></i> All Attendance
+                            </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link dropdown-toggle" 
+                href="#" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#leaveDropdown" 
+                aria-expanded="false" 
+                aria-controls="leaveDropdown">
+                    <i class="fas fa-calendar-alt"></i> Leave Management
+                </a>
+
+                <ul class="collapse list-unstyled ps-3" id="leaveDropdown">
+                    <li>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'employee_leave_details' %}active{% endif %}" 
+                        href="{% url 'employee_leave_details' %}"> My Leave
+                        </a>
+                    </li>
+                    <li>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard' %}active{% endif %}" href="{% url 'leave_dashboard' %}">Leave Management
+                            </a>
+                    </li>
+                    <li>
+                         <a class="nav-link {% if request.resolver_match.url_name == 'leave_balance_list' %}active{% endif %}" href="{% url 'leave_balance_list' %}">Leave Balance
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+
+
+
+
+
+
+
+
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-money-bill-wave"></i> Payroll
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-user-plus"></i> Recruitment
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-tasks"></i> Task Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+            </li>
+        </ul>
+        {% elif request.session.user_role == 'MANAGER' %}
+        <div class="nav-section">Main</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'employee_dashboard' %}active{% endif %}" href="{% url 'employee_dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'employee_page' %}active{% endif %}" href="{% url 'employee_page' %}">
+                    <i class="fas fa-users"></i> My Team
+                </a>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'attendance_dashboard' %}active{% endif %}" href="{% url 'attendance:dashboard' %}">
+                    <i class="fas fa-user-check"></i> My Attendance
+                </a>
+            </li>
+            </li>
+            <li class="nav-item dropdown">
+               <!-- Dropdown Toggle -->
+                <a class="nav-link dropdown-toggle" 
+                    href="#" 
+                    id="leaveDropdown" 
+                    role="button" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                    style="color: #fff;">
+                    <i class="fas fa-calendar-alt"></i> Leave
+                </a>
+
+                <!-- Dropdown Menu -->
+                <ul class="dropdown-menu" 
+                    aria-labelledby="leaveDropdown"
+                    style="background-color: transparent; border: none;">
+                    <li>
+                       <a class="nav-link {% if request.resolver_match.url_name == 'employee_leave_details' %}active{% endif %}" href="{% url 'employee_leave_details' %}">My Leave </a>
+                    </li>
+                    <li>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard' %}active{% endif %}" href="{% url 'leave_dashboard' %}">Leave Management
+                        </a>
+                    </li>
+                   <li>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'leave_balance_list' %}active{% endif %}" href="{% url 'leave_balance_list' %}">Leave Balance
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+        {% else %}
+    <div class="nav-section">Main</div>
+<ul class="nav flex-column">
+    <!-- Profile -->
+    <li class="nav-item">
+        <a class="nav-link" 
+           href="{% url 'employee_dashboard' %}">
+            <i class="fas fa-tachometer-alt"></i> My Profile
+        </a>
+    </li>
+
+    <!-- Attendance Dropdown -->
+    <li class="nav-item">
+    <a class="nav-link dropdown-toggle" 
+       href="#" 
+       data-bs-toggle="collapse" 
+       data-bs-target="#attendanceMenu" 
+       aria-expanded="false" 
+       aria-controls="attendanceMenu">
+        <i class="fas fa-user-check"></i> Attendance
+    </a>
+
+    <ul class="collapse list-unstyled ps-3" id="attendanceMenu">
+        <li>
+            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+               href="{% url 'attendance:dashboard' %}">
+                <i class="fas fa-chart-line"></i> Biometric
+            </a>
+        </li>
+        <li>
+            <a class="nav-link {% if request.resolver_match.url_name == 'all_attendance' %}active{% endif %}" 
+               href="{% url 'attendance:all_attendance' %}">
+                <i class="fas fa-list"></i> View My Attendance
+            </a>
+        </li>
+    </ul>
+</li>
+
+            <!-- <li class="nav-item">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'attendance_dashboard' %}active{% endif %}" href="{% url 'attendance:dashboard' %}">
+                    <i class="fas fa-user-check"></i> My Attendance
+                </a>
+            </li>
+                <a class="nav-link" href="#">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+            </li> -->
+            <li class="nav-item dropdown">
+    <!-- Dropdown Toggle -->
+    <a class="nav-link dropdown-toggle" 
+       href="#" 
+       id="leaveDropdown" 
+       role="button" 
+       data-bs-toggle="dropdown" 
+       aria-expanded="false"
+       style="color: #fff;">
+        <i class="fas fa-calendar-alt"></i> Leave
+    </a>
+
+    <!-- Dropdown Menu -->
+    <ul class="dropdown-menu" 
+        aria-labelledby="leaveDropdown"
+        style="background-color: transparent; border: none;">
+        <li>
+           <a class="nav-link {% if request.resolver_match.url_name == 'employee_leave_details' %}active{% endif %}" href="{% url 'employee_leave_details' %}">
+                 Leave Management
+                </a>
+        </li>
+        <li>
+            <a class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard' %}active{% endif %}" href="{% url 'leave_dashboard' %}">
+                   Holiday Calander
+                </a>
+        </li>
+    </ul>
+</li>
+        </ul>
+        {% endif %}
+    </nav>
+    
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg top-navbar">
+        <div class="container-fluid">
+            <button class="btn btn-outline-secondary sidebar-toggle me-3" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <!-- <div class="nav-item me-3">
+                    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-question-circle"></i> Help
+                    </a>
+                </div>
+                 -->
+                <!-- <div class="nav-item notification-badge me-3">
+                    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge bg-danger">3</span>
+                    </a>
+                </div> -->
+                
+                <div class="user-info dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
+                        <div class="user-avatar">
+                            {{ request.session.user_name|slice:":2"|upper }}
+                        </div>
+                        <div class="ms-2 d-none d-md-block">
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">{{ request.session.user_name }}</div>
+                            <small class="text-muted">{{ request.session.user_role|title }}</small>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+                        {% if request.session.user_role != 'EMPLOYEE' %}
+                        <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content Area -->
+    <div class="main-content">
+    {% else %}
+    <div class="container-fluid">
+    {% endif %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% csrf_token %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+        
+        // Update active nav link
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+    </script>
+    {% endif %}
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

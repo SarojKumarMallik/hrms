@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}My Attendance - HR System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-list"></i> My Attendance Records</h2>
+    <p class="text-muted">View your attendance history</p>
+</div>
+
+<div class="custom-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="card-title mb-0">Attendance History</h4>
+        <div>
+            <!-- ✅ Download PDF Button -->
+            <a href="{% url 'attendance:download_report' %}" class="btn btn-success btn-sm">
+                <i class="fas fa-file-pdf"></i> Download Report (PDF)
+            </a>
+
+            <!-- Back to Dashboard Button -->
+            <a href="{% url 'attendance:dashboard' %}" class="btn btn-primary btn-sm ms-2">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Check-In Time</th>
+                    <th>Check-Out Time</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attendance in attendances %}
+                <tr>
+                    <!-- Date -->
+                    <td>{{ attendance.date|date:"M d, Y" }}</td>
+
+                    <!-- Check-In -->
+                    <td>
+                        {% if attendance.check_in %}
+                            <span class="badge bg-success">{{ attendance.check_in|date:"h:i A" }}</span>
+                        {% else %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Check-Out -->
+                    <td>
+                        {% if attendance.check_out %}
+                            <span class="badge bg-danger">{{ attendance.check_out|date:"h:i A" }}</span>
+                        {% elif attendance.check_in %}
+                            <span class="badge bg-secondary">Not Yet</span>
+                        {% else %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                        {% if attendance.check_in and attendance.check_out %}
+                            <span class="badge bg-success">Present</span>
+                        {% elif attendance.check_in %}
+                            <span class="badge bg-warning text-dark">Half Day</span>
+                        {% else %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ✅ Duration -->
+                    <td>
+                        {% if attendance.duration_display %}
+                            {{ attendance.duration_display }}
+                        {% else %}
+                            <span class="text-muted">---</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No attendance records found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if attendances.has_other_pages %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if attendances.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ attendances.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                {% for num in attendances.paginator.page_range %}
+                    {% if attendances.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > attendances.number|add:'-3' and num < attendances.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if attendances.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ attendances.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

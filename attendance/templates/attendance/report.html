@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Report - HR System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-chart-bar"></i> Attendance Report</h2>
+    <p class="text-muted">View and manage employee attendance records</p>
+</div>
+
+<!-- ✅ Filter Section -->
+<div class="datatable-controls">
+    <form method="GET" class="mb-3">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Search employee..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-2">
+                <select name="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept }}" {% if dept == selected_department %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_from" class="form-control" placeholder="From Date" value="{{ date_from|default:today|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_to" class="form-control" placeholder="To Date" value="{{ date_to|default:today|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'attendance:report' %}" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- ✅ Card Section -->
+<div class="custom-card">
+
+    <!-- ✅ Header with PDF Download Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="card-title mb-0">Attendance Records</h5>
+            <span class="badge bg-primary mt-1">Total: {{ attendances.paginator.count }}</span>
+        </div>
+        <div>
+            <a href="{% url 'attendance:download_admin_report' %}?search={{ search_query }}&department={{ selected_department }}&date_from={{ date_from|default:today|date:'Y-m-d' }}&date_to={{ date_to|default:today|date:'Y-m-d' }}" 
+               class="btn btn-success btn-sm">
+                <i class="fas fa-file-pdf"></i> Download Report (PDF)
+            </a>
+        </div>
+    </div>
+
+    <!-- ✅ Table Section -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Date</th>
+                    <th>Check-In</th>
+                    <th>Check-Out</th>
+                    <th>Status</th>
+                    <th>Punctuality</th> <!-- ✅ New Column -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for attendance in attendances %}
+                <tr>
+                    <td>{{ attendance.employee.employee_id }}</td>
+                    <td>{{ attendance.employee.first_name }} {{ attendance.employee.last_name }}</td>
+                    <td>{{ attendance.employee.department }}</td>
+                    <td>{{ attendance.date|date:"M d, Y" }}</td>
+                    <td>
+                        {% if attendance.check_in %}
+                            <span class="badge bg-success">{{ attendance.check_in|date:"h:i A" }}</span>
+                        {% else %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if attendance.check_out %}
+                            <span class="badge bg-danger">{{ attendance.check_out|date:"h:i A" }}</span>
+                        {% elif attendance.check_in %}
+                            <span class="badge bg-secondary">Not Yet</span>
+                        {% else %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if attendance.check_in and attendance.check_out %}
+                            <span class="badge bg-success">Present</span>
+                        {% elif attendance.check_in %}
+                            <span class="badge bg-warning text-dark">Half Day</span>
+                        {% else %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if attendance.check_in %}
+                            {% if attendance.check_in.time <= '09:30:00' %}
+                                <span class="badge bg-success">On Time</span>
+                            {% else %}
+                                <span class="badge bg-danger">Late</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-secondary">Absent</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No attendance records found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ✅ Pagination -->
+    {% if attendances.has_other_pages %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if attendances.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ attendances.previous_page_number }}&search={{ search_query }}&department={{ selected_department }}&date_from={{ date_from }}&date_to={{ date_to }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in attendances.paginator.page_range %}
+                    {% if attendances.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > attendances.number|add:'-3' and num < attendances.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&search={{ search_query }}&department={{ selected_department }}&date_from={{ date_from }}&date_to={{ date_to }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if attendances.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ attendances.next_page_number }}&search={{ search_query }}&department={{ selected_department }}&date_from={{ date_from }}&date_to={{ date_to }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

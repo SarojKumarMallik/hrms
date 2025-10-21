@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Management - HR System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+    <h1 class="h2">Admin Management</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <span class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-calendar"></i> {{ today_date|default:"" }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Admin List Card -->
+<div class="custom-card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-user-tie"></i> System Administrators
+        </h5>
+        <a href="{% url 'admin_create' %}" class="btn btn-light btn-sm">
+            <i class="fas fa-plus"></i> Add New Admin
+        </a>
+    </div>
+    <div class="card-body">
+        {% if admins %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Profile</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in admins %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {% if admin.profile_picture %}
+                                <img src="{{ admin.profile_picture }}" alt="Profile" class="rounded-circle" width="40" height="40">
+                            {% else %}
+                                <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ admin.name }}</strong>
+                        </td>
+                        <td>{{ admin.email }}</td>
+                        <td>{{ admin.phone|default:"-" }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ admin.role }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if admin.status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ admin.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ admin.created_at|date:"M d, Y" }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'admin_update' admin.pk %}" class="btn btn-outline-primary btn-sm" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin_delete' admin.pk %}" class="btn btn-outline-danger btn-sm" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-user-tie text-muted" style="font-size: 4rem;"></i>
+            <h4 class="mt-3">No Administrators Found</h4>
+            <p class="text-muted">Get started by adding your first system administrator.</p>
+            <a href="{% url 'admin_create' %}" class="btn btn-primary mt-2">
+                <i class="fas fa-plus"></i> Add First Admin
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="custom-card text-center">
+            <div class="card-icon mx-auto mb-3" style="background-color: #3498db;">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <h3 class="metric-large">{{ admins.count }}</h3>
+            <p class="card-title">Total Admins</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="custom-card text-center">
+            <div class="card-icon mx-auto mb-3" style="background-color: #2ecc71;">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h3 class="metric-large">{{ admins|length }}</h3>
+            <p class="card-title">Active Admins</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="custom-card text-center">
+            <div class="card-icon mx-auto mb-3" style="background-color: #e74c3c;">
+                <i class="fas fa-user-slash"></i>
+            </div>
+            <h3 class="metric-large">0</h3>
+            <p class="card-title">Inactive Admins</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="custom-card text-center">
+            <div class="card-icon mx-auto mb-3" style="background-color: #9b59b6;">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="metric-large">{{ admins|length }}</h3>
+            <p class="card-title">System Roles</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
