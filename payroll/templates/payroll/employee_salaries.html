@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Employee Salaries - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Employee Salaries</h1>
+                <p class="text-muted mb-0">Manage employee salary structures</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'add_employee_salary' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Salary Structure
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Salaries Table -->
+    <div class="custom-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Salary Structures</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Employee ID</th>
+                            <th>Department</th>
+                            <th>Basic Salary</th>
+                            <th>Gross Salary</th>
+                            <th>Net Salary</th>
+                            <th>Effective Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for salary in salaries %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if salary.employee.profile_picture %}
+                                    <img src="{{ salary.employee.profile_picture.url }}" alt="{{ salary.employee.first_name }}" 
+                                         class="rounded-circle me-2" width="32" height="32">
+                                    {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px; font-size: 12px;">
+                                        {{ salary.employee.first_name|first }}{{ salary.employee.last_name|first }}
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ salary.employee.first_name }} {{ salary.employee.last_name }}</div>
+                                        <small class="text-muted">{{ salary.employee.designation }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ salary.employee.employee_id }}</td>
+                            <td>{{ salary.employee.department }}</td>
+                            <td class="fw-bold">₹{{ salary.basic_salary }}</td>
+                            <td class="fw-bold text-success">₹{{ salary.gross_salary }}</td>
+                            <td class="fw-bold text-primary">₹{{ salary.net_salary }}</td>
+                            <td>{{ salary.effective_date }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_employee_salary' salary.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'edit_employee_salary' salary.id %}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-money-bill-wave fa-2x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Salary Structures</h5>
+                                <p class="text-muted">Get started by creating your first salary structure.</p>
+                                <a href="{% url 'add_employee_salary' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Add Salary Structure
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

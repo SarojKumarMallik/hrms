@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Payroll Run - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Create Payroll Run</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'payroll_runs' %}">Payroll Runs</a></li>
+                        <li class="breadcrumb-item active">Create Run</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'payroll_runs' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Runs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">New Payroll Run</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Run Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" 
+                                   placeholder="e.g., January 2025 Payroll" required>
+                            <div class="form-text">A descriptive name for this payroll run</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Payroll Year <span class="text-danger">*</span></label>
+                                <select class="form-select" name="payroll_year" required>
+                                    <option value="">Select Year</option>
+                                    {% for year in years %}
+                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                                        {{ year }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Payroll Month <span class="text-danger">*</span></label>
+                                <select class="form-select" name="payroll_month" required>
+                                    <option value="">Select Month</option>
+                                    {% for month_num, month_name in months %}
+                                    <option value="{{ month_num }}" {% if month_num == current_month %}selected{% endif %}>
+                                        {{ month_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> This will create a draft payroll run. You'll need to process it to generate payslips.
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Payroll Run
+                            </button>
+                            <a href="{% url 'payroll_runs' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

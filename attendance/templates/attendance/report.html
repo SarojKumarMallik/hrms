@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Report - HR System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-chart-bar"></i> Attendance Report</h2>
+    <p class="text-muted">View and manage employee attendance records</p>
+</div>
+
+<!-- ✅ Filter Section -->
+<div class="datatable-controls" style="margin-bottom: 20px;">
+    <form method="GET" class="mb-3">
+        <div class="row g-3 align-items-center" style="display: flex; flex-wrap: wrap; gap: 10px;">
+
+            <!-- Search -->
+            <div class="col-md-3" style="flex: 1 1 220px; min-width: 220px;">
+                <input type="text" name="search" class="form-control" placeholder="Search employee..."
+                    value="{{ search_query }}" style="height: 42px; border-radius: 6px;">
+            </div>
+
+            <!-- Department -->
+            <div class="col-md-2" style="flex: 1 1 180px; min-width: 180px;">
+                <select name="department" class="form-select" style="height: 42px; border-radius: 6px;">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept }}" {% if dept == selected_department %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select name="branch" class="form-select" style="height: 42px; border-radius: 6px;">
+                    <option value="">All Branches</option>
+                    {% for br in branches %}
+                        <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>{{ br }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+           <!-- Date From -->
+                <div class="col-md-2" style="flex: 1 1 150px; min-width: 150px;">
+                    <input type="date" name="date_from" class="form-control"
+                        value="{% if date_from %}{{ date_from }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
+                        style="height: 42px; border-radius: 6px;">
+                </div>
+
+                <!-- Date To -->
+                <div class="col-md-2" style="flex: 1 1 150px; min-width: 150px;">
+                    <input type="date" name="date_to" class="form-control"
+                        value="{% if date_to %}{{ date_to }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
+                        style="height: 42px; border-radius: 6px;">
+                </div>
+
+
+            <!-- Status Filter -->
+            <div class="col-md-2" style="flex: 1 1 160px; min-width: 160px;">
+                <select name="status_filter" class="form-select" style="height: 42px; border-radius: 6px;">
+                    <option value="">All Status</option>
+                    <option value="Present" {% if status_filter == "Present" %}selected{% endif %}>Present</option>
+                    <option value="Absent" {% if status_filter == "Absent" %}selected{% endif %}>Absent</option>
+                    <option value="Half Day" {% if status_filter == "Half Day" %}selected{% endif %}>Half Day</option>
+                    <option value="On Time" {% if status_filter == "On Time" %}selected{% endif %}>On Time</option>
+                    <option value="Late" {% if status_filter == "Late" %}selected{% endif %}>Late</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div class="col-md-2 d-flex" style="gap: 10px; flex: 1 1 180px; min-width: 180px;">
+                <button type="submit" class="btn btn-primary w-50"
+                    style="height: 42px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-search me-1"></i> Filter
+                </button>
+
+                <a href="{% url 'attendance:report' %}" class="btn btn-secondary w-50"
+                    style="height: 42px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-redo me-1"></i> Reset
+                </a>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+
+<!-- ✅ Card Section -->
+<div class="custom-card">
+
+    <!-- ✅ Header with PDF Download Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="card-title mb-0">Attendance Records</h5>
+            <span class="badge bg-primary mt-1">Total: {{ attendances.paginator.count }}</span>
+        </div>
+        <div>
+           <a href="{% url 'attendance:download_admin_report' %}?search={{ search_query }}&department={{ selected_department }}&branch={{ selected_branch }}&date_from={{ date_from }}&date_to={{ date_to }}&status_filter={{ status_filter }}"
+            class="btn btn-success btn-sm">
+            <i class="fas fa-file-excel"></i> Download Report (Excel)
+            </a>
+        </div>
+    </div>
+
+    <!-- ✅ Table Section -->
+    <div class="table-responsive"
+        style="border-radius: 12px; overflow: hidden; background: #ffffff; border: 1px solid #e5e7eb;">
+        <table class="table align-middle text-center"
+            style="margin-bottom: 0; border-collapse: separate; border-spacing: 0;">
+            <thead style="background-color: #f8fafc; color: #374151; font-weight: 600;">
+                <tr style="font-size: 14px; text-transform: uppercase;">
+                    <th style="padding: 12px;">Employee ID</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Date</th>
+                    <th>Check-In</th>
+                    <th>Check-Out</th>
+                    <th>Status</th>
+                    <th>Punctuality</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for attendance in attendances %}
+                <tr style="font-size: 14px; transition: background-color 0.2s ease; border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px 12px; color: #111827; font-weight: 500;">{{ attendance.employee_id }}</td>
+                    <td>
+                        <a href="{% url 'employee_detail' attendance.employee_pk %}" style="color: inherit; text-decoration: none;">
+                            {{ attendance.employee_name }}
+                        </a>
+                    </td>
+
+                    <td style="color: #6b7280;">{{ attendance.department }}</td>
+                    <td style="color: #6b7280;">{{ attendance.date|date:"M d, Y" }}</td>
+
+                    <!-- ✅ Check-In -->
+                    <td>
+                        {% if attendance.check_in != "___" %}
+                        <span
+                            style="background-color: #ecfdf5; color: #065f46; font-weight: 600; padding: 4px 10px; border-radius: 8px;">
+                            {{ attendance.check_in }}
+                        </span>
+                        {% else %}
+                        <span
+                            style="background-color: #f3f4f6; color: #9ca3af; padding: 4px 10px; border-radius: 8px;">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ✅ Check-Out -->
+                    <td>
+                        {% if attendance.check_out != "___" %}
+                        <span
+                            style="background-color: #fff7ed; color: #92400e; font-weight: 600; padding: 4px 10px; border-radius: 8px;">
+                            {{ attendance.check_out }}
+                        </span>
+                        {% else %}
+                        <span
+                            style="background-color: #f3f4f6; color: #9ca3af; padding: 4px 10px; border-radius: 8px;">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ✅ Status -->
+                    <td>
+                        {% if attendance.status == "Present" %}
+                        <span
+                            style="background-color: #dcfce7; color: #166534; font-weight: 600; padding: 4px 12px; border-radius: 8px;">Present</span>
+                        {% elif attendance.status == "Absent" %}
+                        <span
+                            style="background-color: #fee2e2; color: #b91c1c; font-weight: 600; padding: 4px 12px; border-radius: 8px;">Absent</span>
+                        {% elif attendance.status == "Half Day" %}
+                        <span
+                            style="background-color: #fef9c3; color: #92400e; font-weight: 600; padding: 4px 12px; border-radius: 8px;">Half
+                            Day</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ✅ Punctuality -->
+                    <td>
+                        {% if attendance.punctuality == "On Time" %}
+                        <span
+                            style="background-color: #dbeafe; color: #1e3a8a; font-weight: 600; padding: 4px 12px; border-radius: 8px;">On
+                            Time</span>
+                        {% elif attendance.punctuality == "Late" %}
+                        <span
+                            style="background-color: #fee2e2; color: #991b1b; font-weight: 600; padding: 4px 12px; border-radius: 8px;">Late</span>
+                        {% else %}
+                        <span
+                            style="background-color: #f3f4f6; color: #9ca3af; padding: 4px 12px; border-radius: 8px;">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ✅ Duration -->
+                    <td>
+                        {% if attendance.duration_display != "-" %}
+                        <span
+                            style="background-color: #eff6ff; color: #1d4ed8; font-weight: 600; padding: 4px 12px; border-radius: 8px;">
+                            {{ attendance.duration_display }}
+                        </span>
+                        {% else %}
+                        <span
+                            style="background-color: #f3f4f6; color: #9ca3af; padding: 4px 12px; border-radius: 8px;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center" style="padding: 40px; color: #6b7280;">
+                        <i class="fas fa-inbox" style="font-size: 24px; color: #9ca3af;"></i>
+                        <p style="margin-top: 10px; font-weight: 500;">No attendance records found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+<!-- ✅ Clean Pagination -->
+{% if attendances.has_other_pages %}
+<div class="d-flex justify-content-center mt-4">
+    <nav>
+        <ul class="pagination">
+            <!-- Previous button -->
+            {% if attendances.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ attendances.previous_page_number }}&search={{ search_query }}&department={{ selected_department }}&date_from={{ date_from }}&date_to={{ date_to }}">Previous</a>
+            </li>
+            {% endif %}
+
+            <!-- Page numbers -->
+            {% for num in attendances.paginator.page_range %}
+            {% if attendances.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}&search={{ search_query }}&department={{ selected_department }}&date_from={{ date_from }}&date_to={{ date_to }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            <!-- Next button -->
+            {% if attendances.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ attendances.next_page_number }}&search={{ search_query }}&department={{ selected_department }}&date_from={{ date_from }}&date_to={{ date_to }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

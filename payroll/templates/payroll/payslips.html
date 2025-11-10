@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payslips - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Payslips</h1>
+                <p class="text-muted mb-0">View and download employee payslips</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payslips List -->
+    <div class="custom-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                {% if user_role == 'EMPLOYEE' %}
+                My Payslips
+                {% else %}
+                All Payslips
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if payslips %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% if user_role != 'EMPLOYEE' %}
+                            <th>Employee</th>
+                            {% endif %}
+                            <th>Payslip No</th>
+                            <th>Payroll Period</th>
+                            <th>Basic Salary</th>
+                            <th>Net Salary</th>
+                            <th>Status</th>
+                            <th>Generated On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payslip in payslips %}
+                        <tr>
+                            {% if user_role != 'EMPLOYEE' %}
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if payslip.employee.profile_picture %}
+                                    <img src="{{ payslip.employee.profile_picture.url }}" alt="{{ payslip.employee.first_name }}" 
+                                         class="rounded-circle me-2" width="32" height="32">
+                                    {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px; font-size: 12px;">
+                                        {{ payslip.employee.first_name|first }}{{ payslip.employee.last_name|first }}
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</div>
+                                        <small class="text-muted">{{ payslip.employee.designation }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endif %}
+                            <td class="fw-bold">{{ payslip.payslip_number }}</td>
+                            <td>{{ payslip.payroll_run.payroll_month }}/{{ payslip.payroll_run.payroll_year }}</td>
+                            <td>₹{{ payslip.basic_salary }}</td>
+                            <td class="fw-bold text-success">₹{{ payslip.net_salary }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if payslip.status == 'generated' %}bg-warning
+                                    {% elif payslip.status == 'approved' %}bg-success
+                                    {% elif payslip.status == 'paid' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ payslip.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ payslip.generated_at|date:"d M Y" }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_payslip' payslip.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'download_payslip' payslip.id %}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Payslips Found</h4>
+                <p class="text-muted">
+                    {% if user_role == 'EMPLOYEE' %}
+                    You don't have any payslips yet.
+                    {% else %}
+                    No payslips have been generated yet.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

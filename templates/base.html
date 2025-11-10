@@ -1,0 +1,975 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <title>{% block title %}HR Management System{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            /* background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%); */
+            background: linear-gradient(180deg, #081018 0%, #075f99 100%);
+            color: white;
+            min-height: 100vh;
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .sidebar .logo {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .logo h4 {
+            color: white;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .nav-section {
+            padding: 15px 20px 5px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 2px 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        /* Top Navbar Styles */
+        .top-navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .08);
+            padding: 12px 20px;
+            margin-left: 250px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            transition: margin-left 0.3s ease;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: #2c3e50 !important;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background:white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .notification-badge {
+            position: relative;
+        }
+
+        .notification-badge .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 0.65rem;
+        }
+
+        /* Main content area */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Card styles */
+        .custom-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .custom-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .metric-large {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .metric-change {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .positive {
+            color: #2ecc71;
+        }
+
+        .negative {
+            color: #e74c3c;
+        }
+
+        .page-header {
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* Employee Page Specific Styles */
+        .datatable-controls {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            height: 42px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+        }
+
+        .filter-select {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            height: 42px;
+            min-width: 150px;
+        }
+
+        .entries-info {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .employee-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .employee-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            width: 340px;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+            overflow: hidden;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .employee-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 40px auto 10px;
+            display: block;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .employee-info {
+            text-align: center;
+            padding: 10px 20px;
+        }
+
+        .employee-info h3 {
+            font-size: 18px;
+            margin: 5px 0 2px;
+        }
+
+        .designation {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .status {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            text-transform: capitalize;
+        }
+
+        .status.active {
+            background-color: #d4f7dc;
+            color: #0a8a3a;
+        }
+
+        .status.inactive {
+            background-color: #ffe6e1;
+            color: #ff6b6b;
+        }
+
+        .view-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .view-icon:hover {
+            background-color: #3498db;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .employee-details-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .details-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .contact-info i {
+            color: #3498db;
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination-info {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            gap: 5px;
+        }
+
+        .page-item {
+            margin: 0;
+        }
+
+        .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            color: #3498db;
+            text-decoration: none;
+            transition: all 0.3s;
+            min-width: 40px;
+            height: 40px;
+        }
+
+        .page-link:hover {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .page-item.active .page-link {
+            background-color: #3498db;
+            border-color: #3498db;
+            color: white;
+        }
+
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-size-selector select {
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            padding: 6px 10px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+            width: 100%;
+        }
+
+        .no-results i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #2c3e50;
+            background-color: #f8f9fa;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        /* Button Group Styles */
+        .btn-group .btn {
+            border-radius: 6px;
+            margin: 0 2px;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        /* Sidebar Toggle */
+        .sidebar-toggle {
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+
+            .sidebar.show {
+                margin-left: 0;
+            }
+
+            .main-content,
+            .top-navbar {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+
+            .search-box {
+                min-width: 200px;
+            }
+
+            .employee-card {
+                width: 100%;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    {% if request.session.user_authenticated %}
+    <!-- Sidebar -->
+        <!-- Dynamic Sidebar -->
+    <!-- Dynamic Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="logo">
+        <a class="navbar-brand d-flex align-items-center me-3" href="{% url 'dashboard' %}">
+            <img src="{% static 'img/ikontellogot.png' %}" alt="Logo" height="40" class="me-2">
+        </a>
+    </div>
+    
+    <!-- Debug Info -->
+    <!-- <div style="color: white; padding: 10px; font-size: 10px; background: rgba(0,255,0,0.2); margin: 10px; border-radius: 5px; border: 1px solid green;">
+        <strong>✅ DYNAMIC MENU LOADED:</strong><br>
+        Menu Items: {{ menu_data|length }}<br>
+        Current Path: {{ request.path }}
+    </div> -->
+
+    <ul class="nav flex-column">
+            {% for menu in menu_data %}
+                {% if menu.submenus %}
+                    <!-- Menu with submenus -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle" 
+                           href="#submenu{{ menu.id }}" 
+                           data-bs-toggle="collapse">
+                            {% if menu.icon %}<i class="{{ menu.icon }}"></i>{% endif %}
+                            {{ menu.name }}
+                        </a>
+                        <ul class="collapse list-unstyled ps-3" id="submenu{{ menu.id }}">
+                            {% for sub in menu.submenus %}
+                                <li>
+                                    <a class="nav-link" href="{{ sub.menu_link_url }}">
+                                        {% if sub.menu_link_icon %}<i class="{{ sub.menu_link_icon }}"></i>{% endif %}
+                                        {{ sub.menu_link_name }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% else %}
+                    <!-- Single menu item -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ menu.url }}">
+                            {% if menu.icon %}<i class="{{ menu.icon }}"></i>{% endif %}
+                            {{ menu.name }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+</nav>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg top-navbar">
+        <div class="container-fluid">
+
+            
+            <button class="btn btn-outline-secondary sidebar-toggle me-3" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <!-- <div class="nav-item me-3">
+                    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-question-circle"></i> Help
+                    </a>
+                </div>
+                 -->
+                <!-- <div class="nav-item notification-badge me-3">
+                    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge bg-danger">3</span>
+                    </a>
+                </div> -->
+
+                 <div class="user-info dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
+                        <div class="user-avatar position-relative">
+                            {% if request.session.user_role == 'ADMIN' or request.session.user_role == 'SUPER ADMIN' %}
+                                {% if request.session.profile_picture %}
+                                    <img src="{{ request.session.profile_picture }}" alt="Profile Picture"
+                                        class="profile-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                        style="width: 40px; height: 40px; font-weight: bold;">
+                                        {{ request.session.user_name|slice:":2"|upper }}
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <img src="{{ request.session.profile_picture }}" alt="Profile Picture"
+                                    class="profile-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% endif %}
+                        </div>
+
+                        <div class="ms-2 d-none d-md-block">
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">{{ request.session.user_name }}</div>
+                            <small class="text-muted">{{ request.session.user_role }}</small>
+                        </div>
+                    </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'update_employee_profile' %}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
+                        
+                        <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        {% else %}
+        <div class="container-fluid">
+            {% endif %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% csrf_token %}
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Bootstrap 5 JS -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- FullCalendar JS -->
+        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script> 
+        <script>
+        // Initialize datepicker $(document).ready(function()
+            {
+            $('.datepicker').datepicker({ format: 'dd-mm-yyyy', autoclose: true, todayHighlight: true, orientation: 'bottom auto' });
+            }
+            </script>
+        <script>
+ // Enhanced menu activation script
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+    console.log('Current Path:', currentPath);
+    
+    // Function to normalize URLs for comparison
+    function normalizeUrl(url) {
+        if (!url) return '';
+        // Remove trailing slashes and ensure consistent format
+        return url.replace(/\/+$/, '');
+    }
+    
+    // Function to detect URL patterns
+    function detectUrlPattern(url) {
+        const normalized = normalizeUrl(url);
+        
+        // Employee detail: /employee/123/ or /employee/123/edit/
+        if (normalized.match(/^\/employee\/\d+/) || normalized.match(/^\/employee\/\d+\/edit/)) {
+            return 'employee-detail';
+        }
+        
+        // Leave apply: /leave/apply/
+        if (normalized === '/leave/apply') {
+            return 'leave-apply';
+        }
+        // Resignation related pages - all should activate resignation/dashboard
+        if (normalized.match(/^\/resignation\/(all|analytics|detail|submit|certificate|exit-interview)/)) {
+            return 'resignation-pages';
+        }
+        
+        return null;
+    }
+    
+    // Function to check if two URLs match (exact or parent-child relationship)
+    function urlMatches(menuUrl, currentUrl) {
+        const normalizedMenu = normalizeUrl(menuUrl);
+        const normalizedCurrent = normalizeUrl(currentUrl);
+        
+        // Exact match
+        if (normalizedMenu === normalizedCurrent) {
+            return { match: true, type: 'exact' };
+        }
+        
+        // Special handling for employee detail/edit pages
+        const currentPattern = detectUrlPattern(normalizedCurrent);
+        if (currentPattern === 'employee-detail') {
+            // Match /employees/ menu for /employee/123/ pages
+            if (normalizedMenu === '/employees' || normalizedMenu === '/employees/') {
+                return { match: true, type: 'special-employee' };
+            }
+        }
+        
+        // Special handling for leave apply page
+        if (currentPattern === 'leave-apply') {
+            // Match /leave/leave_details for /leave/apply/ page
+            if (normalizedMenu === '/leave/leave_details' || normalizedMenu === '/leave/leave_details/') {
+                return { match: true, type: 'special-leave-apply' };
+            }
+        }
+        
+        // Special handling for resignation pages
+        if (currentPattern === 'resignation-pages') {
+            // Match /resignation/dashboard for all resignation sub-pages
+            if (normalizedMenu === '/resignation/dashboard' || normalizedMenu === '/resignation/dashboard/') {
+                return { match: true, type: 'special-resignation' };
+            }
+        }
+
+        // Check if current URL starts with menu URL (parent-child relationship)
+        // But ensure we're matching full path segments, not partial matches
+        if (normalizedMenu && normalizedCurrent.startsWith(normalizedMenu + '/')) {
+            return { match: true, type: 'child' };
+        }
+        
+        return { match: false };
+    }
+    
+    // Function to activate menu items
+    function activateMenus() {
+        console.log('Activating menus for:', currentPath);
+        
+        // Reset all active states
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        document.querySelectorAll('.sidebar .collapse').forEach(collapse => {
+            collapse.classList.remove('show');
+        });
+        
+        let exactMatchFound = false;
+        let parentDropdownToActivate = null;
+        
+        // STEP 1: Check for special patterns first
+        const currentPattern = detectUrlPattern(currentPath);
+        
+        if (currentPattern === 'employee-detail' || currentPattern === 'leave-apply'|| currentPattern === 'resignation-pages') {
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
+                const href = link.getAttribute('href');
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match && (matchResult.type === 'special-employee' || matchResult.type === 'special-leave-apply'|| matchResult.type === 'special-resignation')) {
+                    link.classList.add('active');
+                    exactMatchFound = true;
+                    console.log('✅ Special pattern match found:', href, 'for pattern:', currentPattern);
+                    
+                    // Expand parent dropdown if this is a submenu item
+                    const parentCollapse = link.closest('.collapse');
+                    if (parentCollapse) {
+                        parentCollapse.classList.add('show');
+                        const parentToggle = parentCollapse.previousElementSibling;
+                        if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                            parentToggle.classList.add('active');
+                            parentDropdownToActivate = parentToggle;
+                            console.log('👆 Activated parent dropdown');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // STEP 2: Find exact matches (if no special pattern matched)
+        if (!exactMatchFound) {
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
+                const href = link.getAttribute('href');
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match && matchResult.type === 'exact') {
+                    link.classList.add('active');
+                    exactMatchFound = true;
+                    console.log('✅ Exact match found:', href);
+                    
+                    // Expand parent dropdown if this is a submenu item
+                    const parentCollapse = link.closest('.collapse');
+                    if (parentCollapse) {
+                        parentCollapse.classList.add('show');
+                        const parentToggle = parentCollapse.previousElementSibling;
+                        if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                            parentToggle.classList.add('active');
+                            parentDropdownToActivate = parentToggle;
+                            console.log('👆 Activated parent dropdown');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // STEP 3: If no exact match, check for child URLs
+        if (!exactMatchFound) {
+            console.log('⚠️ No exact match found, checking for parent matches');
+            
+            let bestMatch = { link: null, specificity: 0 };
+            
+            // Find the most specific parent match
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
+                const href = link.getAttribute('href');
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match && matchResult.type === 'child') {
+                    const specificity = normalizeUrl(href).split('/').length;
+                    if (specificity > bestMatch.specificity) {
+                        bestMatch = { link: link, specificity: specificity };
+                    }
+                }
+            });
+            
+            // Activate the best match
+            if (bestMatch.link) {
+                bestMatch.link.classList.add('active');
+                console.log('✅ Parent match found:', bestMatch.link.getAttribute('href'));
+                
+                // Expand parent dropdown
+                const parentCollapse = bestMatch.link.closest('.collapse');
+                if (parentCollapse) {
+                    parentCollapse.classList.add('show');
+                    const parentToggle = parentCollapse.previousElementSibling;
+                    if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                        parentToggle.classList.add('active');
+                        parentDropdownToActivate = parentToggle;
+                        console.log('👆 Activated parent dropdown');
+                    }
+                }
+                exactMatchFound = true;
+            }
+        }
+        
+        // STEP 4: If still no match, check dropdown toggles themselves
+        if (!exactMatchFound) {
+            document.querySelectorAll('.sidebar .dropdown-toggle').forEach(toggle => {
+                const href = toggle.getAttribute('href');
+                
+                // Skip if href is just an anchor (like #submenu-something)
+                if (href && href.startsWith('#')) {
+                    return;
+                }
+                
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match) {
+                    toggle.classList.add('active');
+                    const submenuId = toggle.getAttribute('href');
+                    if (submenuId && submenuId.startsWith('#')) {
+                        const submenu = document.querySelector(submenuId);
+                        if (submenu) {
+                            submenu.classList.add('show');
+                        }
+                    }
+                    exactMatchFound = true;
+                    console.log('✅ Dropdown match found:', href);
+                }
+            });
+        }
+        
+        // STEP 5: Dashboard fallback
+        if (!exactMatchFound && (currentPath === '/' || currentPath === '/dashboard' || currentPath === '/dashboard/')) {
+            const dashboardLink = document.querySelector('.sidebar .nav-link[href*="dashboard"]');
+            if (dashboardLink) {
+                dashboardLink.classList.add('active');
+                console.log('🏠 Activated dashboard');
+            }
+        }
+        
+        console.log('🎯 Menu activation completed. Match found:', exactMatchFound);
+    }
+    
+    // Initialize menu activation
+    activateMenus();
+    
+    // Add click handlers to maintain active state
+    document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Don't handle dropdown toggles
+            if (this.classList.contains('dropdown-toggle')) {
+                return;
+            }
+            
+            console.log('🖱️ Menu item clicked:', this.getAttribute('href'));
+            
+            // Remove active class from all non-dropdown links
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(l => {
+                l.classList.remove('active');
+            });
+            
+            // Add active class to clicked link
+            this.classList.add('active');
+            
+            // Activate parent dropdown if exists
+            const parentCollapse = this.closest('.collapse');
+            if (parentCollapse) {
+                const parentToggle = parentCollapse.previousElementSibling;
+                if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                    // Remove active from other dropdowns
+                    document.querySelectorAll('.sidebar .dropdown-toggle').forEach(dt => {
+                        if (dt !== parentToggle) {
+                            dt.classList.remove('active');
+                        }
+                    });
+                    parentToggle.classList.add('active');
+                }
+            }
+        });
+    });
+});
+</script>
+
+        {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(function () {
+                    var alerts = document.querySelectorAll('.alert');
+                    alerts.forEach(function (alert) {
+                        var bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    });
+                }, 5000);
+            });
+        </script>
+        {% endif %}
+
+        {% block extra_js %}{% endblock %}
+</body>
+
+</html>
